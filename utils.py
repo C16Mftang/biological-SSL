@@ -173,6 +173,8 @@ def train_model(train_loader, test_loader, fix, model, pars, ep_loss, ep_acc, ex
             criterion = ContrastiveHinge(pars.batch_size, pars.thr1, pars.thr2, device=pars.device)
         elif pars.loss == 'HingeNN':
             criterion = ContrastiveHingeNN(pars.batch_size, pars.thr1, pars.thr2, device=pars.device)
+        elif pars.loss == 'HingeNN2':
+            criterion = ContrastiveHingeNN2(pars.batch_size, pars.thr1, pars.thr2, device=pars.device)
         elif pars.loss == 'HingeNNFewerNegs':
             criterion = HingeNNFewerNegs(pars.batch_size, pars.thr1, pars.thr2, pars.n_negs, device=pars.device)
         elif pars.loss == 'GazeHingeNN':
