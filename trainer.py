@@ -145,18 +145,18 @@ datapath = './data'
 savepath = './save'
 pars = PARS(device, datapath, savepath)
 pars.unsupervised = True
-pars.gaze_shift = True
+pars.gaze_shift = False
 pars.architecture = 'VGG6'
-pars.process = 'GLL'
+pars.process = 'E2E'
 pars.update = 'BP'
-pars.loss = 'CLAPP'
+pars.loss = 'HingeNNFewerNegs'
 pars.nonlinear = 'hardtanh'
 pars.repeat = 1
 pars.LR = 0.0001
 pars.clf_lr = 0.001
 pars.distort = 0 # 0 for deformation with randomresizedcrop
-pars.batch_size = 16
-pars.num_train = 256
+pars.batch_size = 250
+pars.num_train = 50000
 pars.epochs = 1
 pars.clf_epochs = 1
 # thr
@@ -166,13 +166,14 @@ pars.thr2 = 1.
 pars.dataset = 'stl10_unlabeled'
 pars.clf_dataset = 'stl10_labeled'
 pars.headsize = 64
-pars.n_negs = 1
+pars.n_negs = 50
 pars.log_every = 20
+pars.augment_stl_train = True
 # pars.loadnet = './save/20211125-101013/basenet_epoch_100_layer_-1.pth'
 # parameters for patch-based training
 pars.n_patches = 7
 pars.patch_size = 16
-pars.augment_stl_train = True
+
 print(pars)
 
 if pars.loadnet == None:

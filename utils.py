@@ -164,7 +164,6 @@ def train_model(train_loader, test_loader, fix, model, pars, ep_loss, ep_acc, ex
     model = model.to(device=device)  # move the model parameters to CPU/GPU
 
     if pars.train_unsupervised:
-        n_features = model[0].weight.shape[0] if pars.process != 'E2E' else 1024
         lr = pars.LR
         opt = pars.OPT
         # select self-supervised losses
@@ -177,6 +176,7 @@ def train_model(train_loader, test_loader, fix, model, pars, ep_loss, ep_acc, ex
         elif pars.loss == 'GazeHingeNN':
             criterion = GazeHingeNN(pars)
         elif pars.loss =='CLAPP':
+            n_features = model[0].weight.shape[0] if pars.process != 'E2E' else 1024
             criterion = CLAPPHinge(pars, n_features)
         else:
             criterion = SimCLRLoss(pars.batch_size, pars.device)
