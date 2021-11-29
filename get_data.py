@@ -58,12 +58,12 @@ class ContrastiveLearningDataset:
             return dataset_fn()
 
 
-def get_stl10_unlabeled_vanilla_deform(batch_size, size):
+def get_stl10_unlabeled_vanilla_deform(datapath, batch_size, size):
     transform = transforms.Compose([
         transforms.RandomCrop(64),
         transforms.ToTensor(),
     ])
-    train = datasets.STL10('./data', split='unlabeled', transform=transform, download=True)
+    train = datasets.STL10(datapath, split='unlabeled', transform=transform, download=True)
     if size != len(train):
         train = torch.utils.data.Subset(train, random.sample(range(len(train)), size))
 
@@ -72,9 +72,9 @@ def get_stl10_unlabeled_vanilla_deform(batch_size, size):
     return train_loader, None
 
 
-def get_stl10_unlabeled_deform(batch_size, size):
+def get_stl10_unlabeled_deform(datapath, batch_size, size):
     """This returns a list of 2 views of a dataset"""
-    dset = ContrastiveLearningDataset('./data')
+    dset = ContrastiveLearningDataset(datapath)
     train = dset.get_dataset('stl10', 2)
     if size != len(train):
         train = torch.utils.data.Subset(train, random.sample(range(len(train)), size))
@@ -83,7 +83,7 @@ def get_stl10_unlabeled_deform(batch_size, size):
     return train_loader, None
 
 
-def get_stl10_unlabeled_patches(batch_size, size):
+def get_stl10_unlabeled_patches(datapath, batch_size, size):
     transform = transforms.Compose([
         transforms.RandomCrop(64),
         transforms.RandomHorizontalFlip(),
@@ -91,7 +91,7 @@ def get_stl10_unlabeled_patches(batch_size, size):
         transforms.ToTensor(),
         transforms.Normalize(mean=[0.4120], std=[0.2570]),
     ])
-    train = datasets.STL10('./data', split='unlabeled', transform=transform, download=True)
+    train = datasets.STL10(datapath, split='unlabeled', transform=transform, download=True)
     if size != len(train):
         train = torch.utils.data.Subset(train, random.sample(range(len(train)), size))
 
@@ -100,7 +100,7 @@ def get_stl10_unlabeled_patches(batch_size, size):
     return train_loader, None
 
 
-def get_stl10_labeled(batch_size, pars):
+def get_stl10_labeled(datapath, batch_size, pars):
     compose_train = []
     if pars.augment_stl_train:
         compose_train.extend([transforms.RandomCrop(64), 
@@ -127,8 +127,8 @@ def get_stl10_labeled(batch_size, pars):
 
     transform_test = transforms.Compose(compose_test)
 
-    train = datasets.STL10('./data', split='train', transform=transform_train, download=True)
-    test = datasets.STL10('./data', split='test', transform=transform_test, download=True)
+    train = datasets.STL10(datapath, split='train', transform=transform_train, download=True)
+    test = datasets.STL10(datapath, split='test', transform=transform_test, download=True)
 
     train_loader = torch.utils.data.DataLoader(train, batch_size=batch_size, shuffle=True)
     test_loader = torch.utils.data.DataLoader(test, batch_size=batch_size, shuffle=True)
@@ -137,8 +137,8 @@ def get_stl10_labeled(batch_size, pars):
 
 
 def get_mnist(batch_size, size=60000):
-    train = datasets.MNIST('./data', train=True, transform=transforms.ToTensor(), download=True)
-    test = datasets.MNIST('./data', train=False, transform=transforms.ToTensor(), download=True)
+    train = datasets.MNIST(datapath, train=True, transform=transforms.ToTensor(), download=True)
+    test = datasets.MNIST(datapath, train=False, transform=transforms.ToTensor(), download=True)
     
     if size != len(train):
         train = torch.utils.data.Subset(train, random.sample(range(len(train)), size))
@@ -148,8 +148,8 @@ def get_mnist(batch_size, size=60000):
     return train_loader, test_loader
 
 def get_cifar100(batch_size, size=60000):
-    train = datasets.CIFAR100('./data', train=True, transform=transforms.ToTensor(), download=True)
-    test = datasets.CIFAR100('./data', train=False, transform=transforms.ToTensor(), download=True)
+    train = datasets.CIFAR100(datapath, train=True, transform=transforms.ToTensor(), download=True)
+    test = datasets.CIFAR100(datapath, train=False, transform=transforms.ToTensor(), download=True)
     
     if size != len(train):
         train = torch.utils.data.Subset(train, random.sample(range(len(train)), size))
@@ -159,8 +159,8 @@ def get_cifar100(batch_size, size=60000):
     return train_loader, test_loader
 
 def get_cifar10(batch_size, size=60000):
-    train = datasets.CIFAR10('./data', train=True, transform=transforms.ToTensor(), download=True)
-    test = datasets.CIFAR10('./data', train=False, transform=transforms.ToTensor(), download=True)
+    train = datasets.CIFAR10(datapath, train=True, transform=transforms.ToTensor(), download=True)
+    test = datasets.CIFAR10(datapath, train=False, transform=transforms.ToTensor(), download=True)
     
     if size != len(train):
         train = torch.utils.data.Subset(train, random.sample(range(len(train)), size))

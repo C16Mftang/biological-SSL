@@ -7,24 +7,32 @@ from get_data import *
 import time
 import json
 
-device = "cuda:0" if torch.cuda.is_available() else "cpu"
-print(device)
-
 def main(pars):
+    if pars.loadnet == None:
+        timestr = time.strftime("%Y%m%d-%H%M%S")
+        expdir = os.path.join(pars.savepath, timestr)
+        if not os.path.exists(expdir):
+            os.makedirs(expdir)
+    else:
+        expdir = pars.loadnet.rsplit('/',1)[0]
+
+    pars.expdir = expdir
+    print(pars.expdir)
+
     pars.train_unsupervised = pars.unsupervised
     start_epoch = 0
     dtype = torch.float32
 
     if pars.gaze_shift:
         print('---------------')
-        base_train_loader, base_test_loader = get_stl10_unlabeled_patches(pars.batch_size, pars.num_train)
+        base_train_loader, base_test_loader = get_stl10_unlabeled_patches(pars.datapath, pars.batch_size, pars.num_train)
     else:
         if pars.distort == 0:
-            base_train_loader, base_test_loader = get_stl10_unlabeled_deform(pars.batch_size, pars.num_train)
+            base_train_loader, base_test_loader = get_stl10_unlabeled_deform(pars.datapath, pars.batch_size, pars.num_train)
         else:
-            base_train_loader, base_test_loader = get_stl10_unlabeled_vanilla_deform(pars.batch_size, pars.num_train)
+            base_train_loader, base_test_loader = get_stl10_unlabeled_vanilla_deform(pars.datapath, pars.batch_size, pars.num_train)
 
-    clf_train_loader, clf_test_loader = get_stl10_labeled(pars.batch_size, pars)
+    clf_train_loader, clf_test_loader = get_stl10_labeled(pars.datapath, pars.batch_size, pars)
     
     test_acc_all = []
     for rep in range(pars.repeat):
@@ -140,52 +148,22 @@ def main(pars):
         print(acc)
     np.save(pars.expdir+'/te.acc.all_', test_acc_all)
 
-# parameters
-datapath = './data'
-savepath = './save'
-pars = PARS(device, datapath, savepath)
-pars.unsupervised = True
-pars.gaze_shift = True
-pars.architecture = 'VGG6'
-pars.process = 'GLL'
-pars.update = 'BP'
-pars.loss = 'CLAPP'
-pars.nonlinear = 'hardtanh'
-pars.repeat = 1
-pars.LR = 0.0001
-pars.clf_lr = 0.001
-pars.distort = 0 # 0 for deformation with randomresizedcrop
-pars.batch_size = 16
-pars.num_train = 256
-pars.epochs = 1
-pars.clf_epochs = 1
-# thr
-pars.thr1 = 2.
-# delta
-pars.thr2 = 1.
-pars.dataset = 'stl10_unlabeled'
-pars.clf_dataset = 'stl10_labeled'
-pars.headsize = 64
-pars.n_negs = 1
-pars.log_every = 20
-# pars.loadnet = './save/20211125-101013/basenet_epoch_100_layer_-1.pth'
-# parameters for patch-based training
-pars.n_patches = 7
-pars.patch_size = 16
-pars.augment_stl_train = True
-print(pars)
 
-if pars.loadnet == None:
-    timestr = time.strftime("%Y%m%d-%H%M%S")
-    expdir = os.path.join(pars.savepath, timestr)
-    if not os.path.exists(expdir):
-        os.makedirs(expdir)
-else:
-    expdir = pars.loadnet.rsplit('/',1)[0]
-
-pars.expdir = expdir
-print(pars.expdir)
-
-main(pars)
-with open(os.path.join(pars.expdir, 'configs.json'), 'w') as fp:
-    json.dump(pars.__dict__, fp)
+if __name__ == '__main__':
+    device = "cuda:0" if torch.cuda.is_available() else "cpu"
+    print(device)
+    
+    datapath = './data'
+    savepath = './save'
+    pars = PARS(device, datapath, savepath)
+    pars.process = 'E2E'
+    pars.update = 'BP'
+    pars.architecture = 'VGG6'
+    pars.gaze_shift = False
+    pars.loss = 'HingeNN2'
+    pars.thr1 = 1
+    pars.thr2 = 3
+    print(pars)
+    main(pars)
+    #with open(os.path.join(pars.expdir, 'configs.json'), 'w') as fp:
+    #    json.dump(pars.__dict__, fp)
