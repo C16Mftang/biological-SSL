@@ -206,6 +206,12 @@ class HingeNNFewerNegs(torch.nn.Module):
         self.thr = thr
         self.delta = delta
         self.future = future
+        self.mask = self.create_bmask(batch_size)
+
+    def create_bmask(self, batch_size):
+        mask = torch.eye(n//2).to(self.device)
+        mask = 2. * mask - 1.
+        return mask
 
     def forward(self, output):
         n = output.shape[0]
@@ -217,7 +223,7 @@ class HingeNNFewerNegs(torch.nn.Module):
         outd = torch.sum(torch.relu(outd) + torch.relu(-outd), dim=1)
         OUT = -outd.reshape(n//2, n//2).transpose(0, 1)
         # Multiply by y=-1/1
-        OUT = (OUT + self.thr) * (2. * torch.eye(n//2).to(self.device) - 1.)
+        OUT = (OUT + self.thr) * self.mask
 
         if self.future != 0:
             loss = 0

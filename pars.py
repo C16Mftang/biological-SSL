@@ -1,10 +1,10 @@
 class PARS:
     def __init__(self, device, datapath, savepath,
-                 process='E2E', update='BP', architecture = 'CONV', nonlinear='hardtanh', batchsize=500,
-                 num_train=50000, unsupervised = False, gaze_shift=True, headsize = 64, distort=0, thr1=-1.25, thr2=0,
-                 dataset = 'Cifar100', loss='SimCLR', optimizer='Adam', lr=0.0001, epochs=800,
-                 clf_dataset = 'Cifar10', clf_loss='CE', clf_opt='Adam', clf_lr=0.0002, clf_epochs=400,
-                 repeat = 5, loadnet=None, loadclf = None, patch_size=16, n_negs=16, n_patches=7, log_every=20,
+                 process='E2E', update='BP', architecture = 'CONV', nonlinear='hardtanh', batchsize=250,
+                 num_train=50000, unsupervised = True, gaze_shift=False, headsize = 64, distort=0, thr1=-1.25, thr2=0,
+                 dataset = 'stl10_unlabeled', loss='SimCLR', optimizer='Adam', lr=0.0001, epochs=100,
+                 clf_dataset = 'stl10_labeled', clf_loss='CE', clf_opt='Adam', clf_lr=0.001, clf_epochs=200,
+                 repeat = 1, loadnet=None, loadclf = None, patch_size=16, n_negs=16, n_patches=7, log_every=20,
                  augment_stl_train=True):
         self.process = process # 'E2E', 'GLL', 'RLL'
         self.update = update # 'BP', 'FA', 'UF', 'US'
@@ -14,7 +14,7 @@ class PARS:
         self.num_train = num_train
 
         self.unsupervised = unsupervised # SimCLR
-        self.gaze_shift = True
+        self.gaze_shift = gaze_shift
         self.headsize = headsize # head for unsupervised learning
         self.distort = distort # 3 for our old one, 0 for our new one with random resized crop
         self.thr1 = thr1
