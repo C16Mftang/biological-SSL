@@ -172,11 +172,11 @@ def train_model(train_loader, test_loader, fix, model, pars, ep_loss, ep_acc, ex
         if pars.loss == 'Hinge':
             criterion = ContrastiveHinge(pars.batch_size, pars.thr1, pars.thr2, device=pars.device)
         elif pars.loss == 'HingeNN':
-            criterion = ContrastiveHingeNN(pars.batch_size, pars.thr1, pars.thr2, device=pars.device)
+            criterion = ContrastiveHingeNN(pars.batch_size, pars.thr1, pars.thr2, pars.grad_block, device=pars.device)
         elif pars.loss == 'HingeNN2':
-            criterion = ContrastiveHingeNN2(pars.batch_size, pars.thr1, pars.thr2, device=pars.device)
+            criterion = ContrastiveHingeNN2(pars.batch_size, pars.thr1, pars.thr2, pars.grad_block, device=pars.device)
         elif pars.loss == 'HingeNNFewerNegs':
-            criterion = HingeNNFewerNegs(pars.batch_size, pars.thr1, pars.thr2, pars.n_negs, device=pars.device)
+            criterion = HingeNNFewerNegs(pars.batch_size, pars.thr1, pars.thr2, pars.n_negs, pars.grad_block, device=pars.device)
         elif pars.loss == 'GazeHingeNN':
             criterion = GazeHingeNN(pars)
         elif pars.loss =='CLAPP':

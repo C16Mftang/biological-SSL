@@ -5,7 +5,7 @@ class PARS:
                  dataset = 'stl10_unlabeled', loss='SimCLR', optimizer='Adam', lr=0.0001, epochs=100,
                  clf_dataset = 'stl10_labeled', clf_loss='CE', clf_opt='Adam', clf_lr=0.001, clf_epochs=200,
                  repeat = 1, loadnet=None, loadclf = None, patch_size=16, n_negs=16, n_patches=7, log_every=20,
-                 augment_stl_train=True):
+                 augment_stl_train=True, grad_block=True):
         self.process = process # 'E2E', 'GLL', 'RLL'
         self.update = update # 'BP', 'FA', 'UF', 'US'
         self.architecture = architecture # 'LW', 'CONV'
@@ -45,6 +45,7 @@ class PARS:
         self.log_every = log_every
 
         self.augment_stl_train = augment_stl_train
+        self.grad_block = grad_block
     
     def __str__(self):
         res = ""

@@ -143,17 +143,19 @@ class ContrastiveHinge(torch.nn.Module):
         return loss
 
 class ContrastiveHingeNN(torch.nn.Module):
-    def __init__(self, batch_size, thr=2., delta=1., device='cpu'):
+    def __init__(self, batch_size, thr=2., delta=1., grad_block=True, device='cpu'):
         super(ContrastiveHingeNN, self).__init__()
         self.device = device
         self.batch_size = batch_size
         self.thr = thr
         self.delta = delta
+        self.grad_block = grad_block
 
     def forward(self, output):
         n = output.shape[0]
         out0, out1 = torch.split(output, n//2)
-        out0 = out0.clone().detach() # grad block
+        if self.grad_block:
+            out0 = out0.clone().detach() # grad block
         out0b = out0.repeat([n//2, 1])
         out1b = out1.repeat_interleave(n//2, dim=0)
         outd = out0b - out1b
@@ -167,13 +169,14 @@ class ContrastiveHingeNN(torch.nn.Module):
         return loss
         
 class ContrastiveHingeNN2(torch.nn.Module):
-    def __init__(self, batch_size, thr1=1., thr2=3., device='cpu'):
+    def __init__(self, batch_size, thr1=1., thr2=3., grad_block=True, device='cpu'):
         super(ContrastiveHingeNN2, self).__init__()
         self.device = device
         self.batch_size = batch_size
         self.thr1 = thr1
         self.thr2 = thr2
         self.bmask = self.create_bmask(batch_size)
+        self.grad_block = grad_block
 
     def create_bmask(self, batch_size):
         bmask = torch.eye(batch_size, dtype=torch.bool).to(self.device)
@@ -185,6 +188,8 @@ class ContrastiveHingeNN2(torch.nn.Module):
         # norm = torch.nn.functional.tanh(output)
         norm = output
         h1,h2 = torch.split(norm, self.batch_size)
+        if self.grad_block:
+            h1 = h1.clone().detach()
         h1b = h1.repeat([self.batch_size, 1]) # bsz*bsz, 64
         h2b = h2.repeat_interleave(self.batch_size, dim=0) # bsz*bsz, 64
         outd = h1b - h2b # bsz*bsz, 64
@@ -199,7 +204,7 @@ class ContrastiveHingeNN2(torch.nn.Module):
         return loss
 
 class HingeNNFewerNegs(torch.nn.Module):
-    def __init__(self, batch_size, thr=2., delta=1., future=5, device='cpu'):
+    def __init__(self, batch_size, thr=2., delta=1., future=5, grad_block=True, device='cpu'):
         super(HingeNNFewerNegs, self).__init__()
         self.device = device
         self.batch_size = batch_size
@@ -207,6 +212,7 @@ class HingeNNFewerNegs(torch.nn.Module):
         self.delta = delta
         self.future = future
         self.mask = self.create_bmask(batch_size)
+        self.grad_block = True
 
     def create_bmask(self, batch_size):
         mask = torch.eye(n//2).to(self.device)
@@ -216,7 +222,8 @@ class HingeNNFewerNegs(torch.nn.Module):
     def forward(self, output):
         n = output.shape[0]
         out0, out1 = torch.split(output, n//2)
-        out0 = out0.clone().detach() # grad block
+        if self.grad_block:
+            out0 = out0.clone().detach() # grad block
         out0b = out0.repeat([n//2, 1])
         out1b = out1.repeat_interleave(n//2, dim=0)
         outd = out0b - out1b

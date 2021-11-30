@@ -163,7 +163,8 @@ if __name__ == '__main__':
     pars.loss = 'HingeNN2'
     pars.thr1 = 1
     pars.thr2 = 3
+    pars.grad_block = True
     print(pars)
     main(pars)
-    #with open(os.path.join(pars.expdir, 'configs.json'), 'w') as fp:
-    #    json.dump(pars.__dict__, fp)
+    with open(os.path.join(pars.expdir, 'configs.json'), 'w') as fp:
+       json.dump(pars.__dict__, fp)
