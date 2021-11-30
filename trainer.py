@@ -77,6 +77,12 @@ def main(pars):
                         model.load_state_dict(checkpoint['state_dict'])
                         timestr = pars.loadnet.split('/')[-2].strip()
                         expdir = os.path.join(pars.savepath, timestr)
+                        for pre in range(i):
+                            print('Loading from fixed layer ', pre)
+                            fix_path = os.path.join(expdir, f'basenet_epoch_{pars.epochs}_layer_{pre}.pth')
+                            fix_checkpoint = torch.load(fix_path)
+                            fix[pre].load_state_dict(fix_checkpoint['state_dict'])
+ 
                         if os.path.exists(expdir):
                             start_epoch = checkpoint['epoch']
                             print(f'Checkpoint loaded, resuming from {start_epoch}')
