@@ -209,7 +209,7 @@ class HingeNNFewerNegs(torch.nn.Module):
         self.mask = self.create_bmask(batch_size)
 
     def create_bmask(self, batch_size):
-        mask = torch.eye(n//2).to(self.device)
+        mask = torch.eye(batch_size).to(self.device)
         mask = 2. * mask - 1.
         return mask
 
