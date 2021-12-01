@@ -112,12 +112,22 @@ def main(pars):
                     train_model(base_train_loader, base_test_loader, fix, model, pars, head_loss, None, pars.expdir, current_layer=i)
 
                     pars.train_unsupervised = False
-                    train_model(clf_train_loader, clf_test_loader, net[:(i+1)], classifier[i], pars, val_loss, val_acc, pars.expdir)
-                    test_acc = check_accuracy(clf_test_loader, net[:(i+1)], classifier[i], pars)
-                    print('Rep: %d, Layer: %d, te.acc = %.4f' % (rep+1, i, test_acc))
-                    
+                    if not pars.classify_whole_net:
+                        print('Train Classifier on current layer')
+                        train_model(clf_train_loader, clf_test_loader, net[:(i+1)], classifier[i], pars, val_loss, val_acc, pars.expdir)
+                        test_acc = check_accuracy(clf_test_loader, net[:(i+1)], classifier[i], pars)
+                        print('Rep: %d, Layer: %d, te.acc = %.4f' % (rep+1, i, test_acc))
+                        lw_test_acc.append(test_acc)
+                        print()
+                
+                if pars.classify_whole_net:
+                    print('Train Classifier for the whole model')
+                    pars.train_unsupervised = False
+                    train_model(clf_train_loader, clf_test_loader, net, classifier[-1], pars, val_loss, val_acc, pars.expdir)
+                    test_acc = check_accuracy(clf_test_loader, net, classifier[-1], pars)
+                    print('Rep: %d, te.acc = %.4f' % (rep+1, test_acc))
                     lw_test_acc.append(test_acc)
-                    print()
+
             else: # 'E2E'
                 fix = nn.Sequential()
                 model = nn.Sequential(
