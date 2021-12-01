@@ -56,10 +56,13 @@ def main(pars):
                     lw_test_acc.append(test_acc)
             elif pars.process == 'GLL':
                 # start from where the previous check point was saved
-                if pars.loadnet.startswith('.'):
-                    start_layer = pars.loadnet.rsplit('.')[1].rsplit('_')[-1] if pars.loadnet else 0
+                if pars.loadnet:
+                    if pars.loadnet.startswith('.'):
+                        start_layer = pars.loadnet.rsplit('.')[1].rsplit('_')[-1]
+                    else:
+                        start_layer = pars.loadnet.rsplit('.')[0].rsplit('_')[-1]
                 else:
-                    start_layer = pars.loadnet.rsplit('.')[0].rsplit('_')[-1] if pars.loadnet else 0
+                    start_layer = 0
                 for i in range(int(start_layer), pars.NUM_LAYER):
                     print('LAYER:%d'%i)
                     fix = net[:i]
