@@ -56,7 +56,10 @@ def main(pars):
                     lw_test_acc.append(test_acc)
             elif pars.process == 'GLL':
                 # start from where the previous check point was saved
-                start_layer = pars.loadnet.rsplit('.')[0].rsplit('_')[-1] if pars.loadnet else 0
+                if pars.loadnet.startswith('.'):
+                    start_layer = pars.loadnet.rsplit('.')[1].rsplit('_')[-1] if pars.loadnet else 0
+                else:
+                    start_layer = pars.loadnet.rsplit('.')[0].rsplit('_')[-1] if pars.loadnet else 0
                 for i in range(int(start_layer), pars.NUM_LAYER):
                     print('LAYER:%d'%i)
                     fix = net[:i]
@@ -81,7 +84,14 @@ def main(pars):
                             print('Loading from fixed layer ', pre)
                             fix_path = os.path.join(expdir, f'basenet_epoch_{pars.epochs}_layer_{pre}.pth')
                             fix_checkpoint = torch.load(fix_path)
-                            fix[pre].load_state_dict(fix_checkpoint['state_dict'])
+                            loaded_fix_weights = fix_checkpoint['state_dict']
+                            new_fix_weights = fix[pre].state_dict()
+                            for k in new_fix_weights.keys():
+                                if pars.loss != 'CLAPP':
+                                    new_fix_weights[k] = loaded_fix_weights['0.'+k]
+                                else:
+                                    new_fix_weights[k] = loaded_fix_weights[k]
+                            fix[pre].load_state_dict(new_fix_weights)
  
                         if os.path.exists(expdir):
                             start_epoch = checkpoint['epoch']

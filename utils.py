@@ -162,8 +162,8 @@ def train_model(train_loader, test_loader, fix, model, pars, ep_loss, ep_acc, ex
 
     fix = fix.to(device=device)
     model = model.to(device=device)  # move the model parameters to CPU/GPU
-    print(fix)
-    print(model)
+    # print(fix)
+    # print(model)
 
     if pars.train_unsupervised:
         lr = pars.LR
