@@ -46,11 +46,11 @@ def main(pars):
             head_loss = []
             if pars.process == 'RLL':
                 pars.train_unsupervised = True
-                train_model_rand(base_train_loader, base_test_loader, head, pars, head_loss, None)
+                train_model_rand(base_train_loader, base_test_loader, net, head, pars, head_loss, None)
                 print('Train classifier')
                 pars.train_unsupervised = False
                 for i in range(pars.NUM_LAYER):
-                    train_model(clf_train_loader, clf_test_loader, net[:(i+1)], classifier[i], pars, val_loss, val_acc)
+                    train_model(clf_train_loader, clf_test_loader, net[:(i+1)], classifier[i], pars, val_loss, val_acc, pars.expdir)
                     test_acc = check_accuracy(clf_test_loader, net[:(i+1)], classifier[i], pars)
                     print('Rep: %d, Layer: %d, te.acc = %.4f' % (rep+1, i, test_acc))
                     lw_test_acc.append(test_acc)

@@ -162,8 +162,8 @@ def train_model(train_loader, test_loader, fix, model, pars, ep_loss, ep_acc, ex
 
     fix = fix.to(device=device)
     model = model.to(device=device)  # move the model parameters to CPU/GPU
-    # print(fix)
-    # print(model)
+    print(fix)
+    print(model)
 
     if pars.train_unsupervised:
         lr = pars.LR
@@ -319,23 +319,27 @@ def train_model_rand(train_loader, test_loader, net, classifier, pars, ep_loss, 
     # train_loader, test_loader = get_dataset(data, pars.batch_size, pars.num_train)
     net = net.to(device=device)  # move the model parameters to CPU/GPU
     classifier = classifier.to(device=device)
-
+    print(net)
+    print(classifier)
     if pars.train_unsupervised:
-        scripted_transforms = get_scripted_transforms()
         lr = pars.LR
+        # select self-supervised losses
         if pars.loss == 'Hinge':
-            criterion = ContrastiveHinge(pars.batch_size, device=pars.device)
+            criterion = ContrastiveHinge(pars.batch_size, pars.thr1, pars.thr2, device=pars.device)
         elif pars.loss == 'HingeNN':
-            criterion = ContrastiveHingeNN(pars.batch_size, pars.thr1, pars.thr2, device=pars.device)
-        elif pars.loss =='Chinge':
-            criterion = Chinge_loss(pars.batch_size, pars.device, -1.25, 0)
+            criterion = ContrastiveHingeNN(pars.batch_size, pars.thr1, pars.thr2, pars.grad_block, device=pars.device)
+        elif pars.loss == 'HingeNN2':
+            criterion = ContrastiveHingeNN2(pars.batch_size, pars.thr1, pars.thr2, pars.grad_block, device=pars.device)
+        elif pars.loss == 'HingeNNFewerNegs':
+            criterion = HingeNNFewerNegs(pars.batch_size, pars.thr1, pars.thr2, pars.n_negs, pars.grad_block, device=pars.device)
         else:
-            criterion = SimCLRLoss(pars.batch_size, pars.device)      
+            criterion = SimCLRLoss(pars.batch_size, pars.device)   
     else:
-        lr = pars.clf_lr
         if pars.unsupervised:
+            lr = pars.clf_lr
             loss = pars.clf_loss
         else:
+            lr = pars.LR
             loss = pars.loss
         if loss == 'Hinge':
             criterion = HingeLoss(pars.device)
@@ -349,77 +353,81 @@ def train_model_rand(train_loader, test_loader, net, classifier, pars, ep_loss, 
                 classifier[layer]
                 )
         if pars.OPT=='SGD':
-            opts.append(torch.optim.SGD(model.parameters(), pars.LR))
+            opts.append(torch.optim.SGD(model.parameters(), lr))
         else:
-            opts.append(torch.optim.Adam(model.parameters(), pars.LR))
+            opts.append(torch.optim.Adam(model.parameters(), lr))
+
+    start_epoch = 0
+    if pars.loadnet and pars.train_unsupervised:
+        checkpoint = torch.load(pars.loadnet)
+        net.load_state_dict(checkpoint['net'])
+        classifier.load_state_dict(checkpoint['classifier'])
+        opt_weights = checkpoint['optimizer']
+        for i in range(len(opts)):
+            opts[i].load_state_dict(opt_weights[i])
+        start_epoch = checkpoint['epoch']
+        print('Restart from epoch {}'.format(start_epoch))
+
     print(opts)
 
     epochs = pars.epochs * pars.NUM_LAYER
-    for e in range(epochs):
+    for e in range(start_epoch, epochs):
         running_loss = 0
-        for j in np.arange(0,pars.num_train, pars.batch_size):
-            choose_layer = torch.randint(0, pars.NUM_LAYER, (1,)).item()
-            fix = net[:choose_layer]
-            model = nn.Sequential(
-                net[choose_layer],
-                classifier[choose_layer]
-            )
+        num_train = min(pars.num_train, len(train_loader.dataset))
+        total_n = 2 * num_train if pars.train_unsupervised else num_train
+        with tqdm(total=total_n) as progress_bar:
+            for batch_idx, (data, targ) in enumerate(train_loader):
+                choose_layer = torch.randint(0, pars.NUM_LAYER, (1,)).item()
+                fix = net[:choose_layer]
+                model = nn.Sequential(
+                    net[choose_layer],
+                    classifier[choose_layer]
+                )
 
-            optimizer = opts[choose_layer]
+                optimizer = opts[choose_layer]
+                model.train()  # put model to training mode
 
-            model.train()  # put model to training mode
-            batch = next(iter(train_loader))
-            x = batch[0].to(device, dtype=dtype)
-            # x = torch.from_numpy(train_dat[j:j+pars.batch_size]).to(device=device, dtype=dtype)  # move to device, e.g. GPU
-            if pars.train_unsupervised:
-                img = x*0.5+0.5
-                if pars.distort == 1:
-                    x1 = (deform_data(img, 0.5, ['aff'], 4, 0.2, pars.batch_size, pars.device)-0.5)/0.5
-                    x2 = (deform_data(img, 0.5, ['aff'], 4, 0.2, pars.batch_size, pars.device)-0.5)/0.5
-                elif pars.distort == 2:
-                    x1 = scripted_transforms(img)
-                    x2 = scripted_transforms(img)
-                elif pars.distort == 3:
-                    # x1 = deform_data(x, 0.4, ['aff'], 4, 0.2, pars.batch_size, pars.device)
-                    # x2 = deform_data(x, 0.4, ['aff'], 4, 0.2, pars.batch_size, pars.device)
-                    x1 = deform_data(x, 0.4, ['aff'], 0, 0, pars.batch_size, pars.device)
-                    x2 = deform_data(x, 0.4, ['aff'], 0, 0, pars.batch_size, pars.device)
+                if pars.train_unsupervised:
+                    if pars.distort == 3:
+                        x = data.to(device, dtype=dtype)
+                        x1 = deform_data(x, 0.5, ['aff'], 4, 0.2, False, pars.device)
+                        x2 = deform_data(x, 0.5, ['aff'], 4, 0.2, False, pars.device)
+                        x = torch.cat((x1,x2), dim=0)
+                    elif pars.distort == 0:
+                        x = [d.to(device, dtype=dtype) for d in data]
+                        x = torch.cat(x, dim=0)
                 else:
-                    img = x*0.5+0.5
-                    x1 = (scripted_transforms(img)-0.5)/0.5
-                    x2 = (scripted_transforms(img)-0.5)/0.5
-                x = torch.cat((x1,x2), dim=0)
-            else:
-                # y = torch.from_numpy(train_tar[j:j+pars.batch_size]).to(device=device, dtype=torch.long)
-                y = batch[1].to(device=device, dtype=torch.long)
+                    x = data.to(device, dtype=dtype)
+                    y = targ.to(device=device, dtype=torch.long)
+        
             
-            with torch.no_grad():
-                x1 = fix(x)
-            scores = model(x1)
-            if pars.train_unsupervised:
-                loss = criterion(scores)
-            else:
-                loss = criterion(scores, y)
-            running_loss += loss.item()
-            #print('Layer:{}, loss:{:.4f}'.format(choose_layer, loss.item()))
+                with torch.no_grad():
+                    x1 = fix(x)
+                scores = model(x1)
+                if pars.train_unsupervised:
+                    loss = criterion(scores)
+                else:
+                    loss = criterion(scores, y)
+                running_loss += loss.item()
 
-            # Zero out all of the gradients for the variables which the optimizer
-            # will update.
-            optimizer.zero_grad()
+                progress_bar.set_postfix(loss=loss.item())
+                progress_bar.update(x.size(0))
 
-            # This is the backwards pass: compute the gradient of the loss with
-            # respect to each  parameter of the model.
-            loss.backward()
-
-            # Actually update the parameters of the model using the gradients
-            # computed by the backwards pass.
-            optimizer.step()
+                optimizer.zero_grad()
+                loss.backward()
+                optimizer.step()
 
         running_loss /= (pars.num_train/pars.batch_size)
         ep_loss.append(running_loss) 
 
         if pars.train_unsupervised:
             print('Epoch %d, loss = %.4f' % (e, running_loss))
+            if (e+1) % pars.log_every == 0:
+                torch.save({'epoch': e + 1,
+                            'net': net.state_dict(),
+                            'classifier': classifier.state_dict(),
+                            'optimizer' : [optimizer.state_dict() for optimizer in opts],
+                           }, os.path.join(pars.expdir, f"basenet_epoch_{e+1}_layer.pth"))
         else:
             acc = check_accuracy_rand(test_loader, net, classifier, pars)
             ep_acc.append(acc)
