@@ -136,7 +136,7 @@ def get_stl10_labeled(datapath, batch_size, pars):
     return train_loader, test_loader
 
 
-def get_mnist(batch_size, size=60000):
+def get_mnist(datapath, batch_size, size=60000):
     train = datasets.MNIST(datapath, train=True, transform=transforms.ToTensor(), download=True)
     test = datasets.MNIST(datapath, train=False, transform=transforms.ToTensor(), download=True)
     
@@ -147,7 +147,7 @@ def get_mnist(batch_size, size=60000):
 
     return train_loader, test_loader
 
-def get_cifar100(batch_size, size=60000):
+def get_cifar100(datapath, batch_size, size=60000):
     train = datasets.CIFAR100(datapath, train=True, transform=transforms.ToTensor(), download=True)
     test = datasets.CIFAR100(datapath, train=False, transform=transforms.ToTensor(), download=True)
     
@@ -158,7 +158,7 @@ def get_cifar100(batch_size, size=60000):
 
     return train_loader, test_loader
 
-def get_cifar10(batch_size, size=60000):
+def get_cifar10(datapath, batch_size, size=60000):
     train = datasets.CIFAR10(datapath, train=True, transform=transforms.ToTensor(), download=True)
     test = datasets.CIFAR10(datapath, train=False, transform=transforms.ToTensor(), download=True)
     
