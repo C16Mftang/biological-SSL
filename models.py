@@ -67,7 +67,7 @@ def setup_net(pars):
             
       
             aux = nn.Sequential(
-                nn.AvgPool2d(2),
+                # nn.AvgPool2d(2),
                 nn.Flatten(),
                 # nn.Dropout(p=0.5),
             )
@@ -79,7 +79,7 @@ def setup_net(pars):
             if pars.unsupervised:
                 if pars.loss != 'CLAPP' and pars.loss != 'GazeHingeNN':
                     auxhead = nn.Sequential(
-                        nn.AvgPool2d(2),
+                        # nn.AvgPool2d(2),
                         nn.Flatten(),
                     )
                     if pars.update=='FA':
