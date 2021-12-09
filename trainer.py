@@ -22,17 +22,23 @@ def main(pars):
     pars.train_unsupervised = pars.unsupervised
     start_epoch = 0
     dtype = torch.float32
-
-    if pars.gaze_shift:
-        print('---------------')
-        base_train_loader, base_test_loader = get_stl10_unlabeled_patches(pars.datapath, pars.batch_size, pars.num_train)
-    else:
-        if pars.distort == 0:
-            base_train_loader, base_test_loader = get_stl10_unlabeled_deform(pars.datapath, pars.batch_size, pars.num_train)
+    
+    if pars.dataset == 'stl10_unlabeled':
+        if pars.gaze_shift:
+            base_train_loader, base_test_loader = get_stl10_unlabeled_patches(pars.datapath, pars.batch_size, pars.num_train)
         else:
-            base_train_loader, base_test_loader = get_stl10_unlabeled_vanilla_deform(pars.datapath, pars.batch_size, pars.num_train)
+            if pars.distort == 0:
+                base_train_loader, base_test_loader = get_stl10_unlabeled_deform(pars.datapath, pars.batch_size, pars.num_train)
+            else:
+                base_train_loader, base_test_loader = get_stl10_unlabeled_vanilla_deform(pars.datapath, pars.batch_size, pars.num_train)
 
-    clf_train_loader, clf_test_loader = get_stl10_labeled(pars.datapath, pars.batch_size, pars)
+        clf_train_loader, clf_test_loader = get_stl10_labeled(pars.datapath, pars.batch_size, pars)
+    elif pars.dataset == 'cifar100':
+        base_train_loader, base_test_loader = get_cifar100(pars.datapath, pars.batch_size, pars.num_train)
+        clf_train_loader, clf_test_loader = get_cifar10(pars.datapath, pars.batch_size, pars.num_train)
+    elif pars.dataset == 'cifar10':
+        base_train_loader, base_test_loader = get_cifar10(pars.datapath, pars.batch_size, pars.num_train)
+        clf_train_loader, clf_test_loader = get_cifar10(pars.datapath, pars.batch_size, pars.num_train)
     
     test_acc_all = []
     for rep in range(pars.repeat):
@@ -187,12 +193,18 @@ if __name__ == '__main__':
     pars = PARS(device, datapath, savepath)
     pars.process = 'E2E'
     pars.update = 'BP'
-    pars.architecture = 'VGG6'
+    pars.architecture = 'CONV6'
     pars.gaze_shift = False
-    pars.loss = 'HingeNN2'
-    pars.thr1 = 1
-    pars.thr2 = 3
-    pars.grad_block = True
+    pars.loss = 'HingeNNFewerNegs'
+    pars.thr1 = 2.
+    pars.thr2 = 1.
+    pars.batch_size = 500
+    pars.dataset = 'cifar100'
+    pars.clf_dataset = 'cifar10'
+    pars.distort = 3
+    pars.epochs = 400
+    pars.clf_epochs = 200
+    pars.n_negs
     print(pars)
     main(pars)
     with open(os.path.join(pars.expdir, 'configs.json'), 'w') as fp:

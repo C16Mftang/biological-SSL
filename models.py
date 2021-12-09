@@ -18,7 +18,7 @@ def setup_net(pars):
             NUM_CLASS = 10
                     
     if pars.architecture == 'CONV6':
-        HW = 64
+        HW = 32
         NUM_CHANNEL = 32
         pars.NUM_LAYER = 5
 
@@ -72,9 +72,9 @@ def setup_net(pars):
                 # nn.Dropout(p=0.5),
             )
             if pars.update=='FA':
-                aux.add_module('fc', FALinear(8192,NUM_CLASS))
+                aux.add_module('fc', FALinear(int(NUM_CHANNEL*HW*HW),NUM_CLASS))
             else:
-                aux.add_module('fc', nn.Linear(8192,NUM_CLASS))
+                aux.add_module('fc', nn.Linear(int(NUM_CHANNEL*HW*HW),NUM_CLASS))
 
             if pars.unsupervised:
                 if pars.loss != 'CLAPP' and pars.loss != 'GazeHingeNN':
@@ -83,9 +83,9 @@ def setup_net(pars):
                         nn.Flatten(),
                     )
                     if pars.update=='FA':
-                        auxhead.add_module('fc', FALinear(8192,pars.headsize,bias=False))
+                        auxhead.add_module('fc', FALinear(int(NUM_CHANNEL*HW*HW),pars.headsize,bias=False))
                     else:
-                        auxhead.add_module('fc', nn.Linear(8192,pars.headsize,bias=False))
+                        auxhead.add_module('fc', nn.Linear(int(NUM_CHANNEL*HW*HW),pars.headsize,bias=False))
                 elif pars.loss == 'GazeHingeNN':
                     auxhead = nn.Sequential(
                         # nn.AvgPool2d(2),
@@ -134,6 +134,7 @@ def setup_net(pars):
                     layer.add_module('conv', FAConv2d(int(NUM_CHANNEL),int(NUM_CHANNEL)*2,3,padding=1,bias=False))
                 else:
                     layer.add_module('conv', nn.Conv2d(int(NUM_CHANNEL),int(NUM_CHANNEL)*2,3,padding=1,bias=False))
+                layer.add_module('activation', nn.Hardtanh())
                 layer.add_module('maxpool', nn.MaxPool2d(2))
                 HW /= 2
                 NUM_CHANNEL *= 2
@@ -154,6 +155,7 @@ def setup_net(pars):
                     layer.add_module('conv', FAConv2d(int(NUM_CHANNEL),int(NUM_CHANNEL),3,padding=1,bias=False))
                 else:
                     layer.add_module('conv', nn.Conv2d(int(NUM_CHANNEL),int(NUM_CHANNEL),3,padding=1,bias=False))
+                layer.add_module('activation', nn.Hardtanh())
                 layer.add_module('maxpool', nn.MaxPool2d(2))
                 HW /= 2
             
