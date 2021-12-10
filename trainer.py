@@ -204,7 +204,7 @@ if __name__ == '__main__':
     pars.distort = 3
     pars.epochs = 400
     pars.clf_epochs = 200
-    pars.n_negs
+    pars.n_negs = 5
     print(pars)
     main(pars)
     with open(os.path.join(pars.expdir, 'configs.json'), 'w') as fp:
